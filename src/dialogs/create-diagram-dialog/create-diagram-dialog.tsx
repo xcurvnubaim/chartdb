@@ -8,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 import { useConfig } from '@/hooks/use-config';
 import type { DatabaseMetadata } from '@/lib/data/import-metadata/metadata-types/database-metadata';
 import { loadDatabaseMetadata } from '@/lib/data/import-metadata/metadata-types/database-metadata';
-import { generateDiagramId } from '@/lib/utils';
 import { useChartDB } from '@/hooks/use-chartdb';
 import { useDialog } from '@/hooks/use-dialog';
 import type { DatabaseEdition } from '@/lib/domain/database-edition';
@@ -17,6 +16,7 @@ import { CreateDiagramDialogStep } from './create-diagram-dialog-step';
 import { ImportDatabase } from '../common/import-database/import-database';
 import { useTranslation } from 'react-i18next';
 import type { BaseDialogProps } from '../common/base-dialog-props';
+import axios from 'axios';
 
 export interface CreateDiagramDialogProps extends BaseDialogProps {}
 
@@ -88,8 +88,12 @@ export const CreateDiagramDialog: React.FC<CreateDiagramDialogProps> = ({
     ]);
 
     const createEmptyDiagram = useCallback(async () => {
+        const res = await axios.post('http://localhost:3000/api/diagrams');
+        const newDiagramId = res.data.insertedId;
+        console.log(res);
+
         const diagram: Diagram = {
-            id: generateDiagramId(),
+            id: newDiagramId,
             name: `Diagram ${diagramNumber}`,
             databaseType: databaseType ?? DatabaseType.GENERIC,
             databaseEdition:

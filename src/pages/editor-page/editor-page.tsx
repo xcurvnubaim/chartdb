@@ -38,8 +38,7 @@ import { Helmet } from 'react-helmet-async';
 import { useStorage } from '@/hooks/use-storage';
 import { AlertProvider } from '@/context/alert-context/alert-provider';
 
-const OPEN_STAR_US_AFTER_SECONDS = 30;
-const SHOW_STAR_US_AGAIN_AFTER_DAYS = 1;
+import axios from 'axios';
 
 const OPEN_BUCKLE_AFTER_SECONDS = 60;
 const SHOW_BUCKLE_AGAIN_AFTER_DAYS = 1;
@@ -64,7 +63,7 @@ const EditorPageComponent: React.FC = () => {
     const { openSelectSchema, showSidePanel } = useLayout();
     const { resetRedoStack, resetUndoStack } = useRedoUndoStack();
     const { showLoader, hideLoader } = useFullScreenLoader();
-    const { openCreateDiagramDialog, openStarUsDialog, openBuckleDialog } =
+    const { openCreateDiagramDialog, openBuckleDialog } =
         useDialog();
     const { diagramId } = useParams<{ diagramId: string }>();
     const { config, updateConfig } = useConfig();
@@ -74,16 +73,13 @@ const EditorPageComponent: React.FC = () => {
     const {
         hideMultiSchemaNotification,
         setHideMultiSchemaNotification,
-        starUsDialogLastOpen,
-        setStarUsDialogLastOpen,
-        githubRepoOpened,
         setBuckleDialogLastOpen,
         buckleDialogLastOpen,
         buckleWaitlistOpened,
     } = useLocalConfig();
     const { toast } = useToast();
     const { t } = useTranslation();
-    const { listDiagrams } = useStorage();
+    const { listDiagrams,deleteDiagram,addDiagram } = useStorage();
 
     useEffect(() => {
         if (!config) {
@@ -94,13 +90,34 @@ const EditorPageComponent: React.FC = () => {
             return;
         }
 
+        // console.log(diagramId);
+
+        const fetchDiagram = async () => {
+            console.log(diagramId);
+            console.log('fetching diagram');
+            const response = await axios.get(
+                `http://localhost:3000/api/diagrams/${diagramId}`
+            );
+            console.log(response.data.diagram);
+            if (diagramId) {
+                await deleteDiagram(diagramId);
+                await addDiagram({ diagram: response.data.diagram });
+            }
+        };
+
         const loadDefaultDiagram = async () => {
             if (diagramId) {
                 setInitialDiagram(undefined);
                 showLoader();
                 resetRedoStack();
                 resetUndoStack();
+                // await deleteDiagram(diagramId);
+                await fetchDiagram();
+                console.log('disini', diagramId);
+
                 const diagram = await loadDiagram(diagramId);
+
+                console.log(diagram);
                 if (!diagram) {
                     if (currentDiagram?.id) {
                         await updateConfig({
@@ -135,6 +152,7 @@ const EditorPageComponent: React.FC = () => {
                 }
             }
         };
+
         loadDefaultDiagram();
     }, [
         diagramId,
@@ -149,27 +167,8 @@ const EditorPageComponent: React.FC = () => {
         showLoader,
         currentDiagram?.id,
         updateConfig,
-    ]);
-
-    useEffect(() => {
-        if (!currentDiagram?.id || githubRepoOpened) {
-            return;
-        }
-
-        if (
-            new Date().getTime() - starUsDialogLastOpen >
-            1000 * 60 * 60 * 24 * SHOW_STAR_US_AGAIN_AFTER_DAYS
-        ) {
-            const lastOpen = new Date().getTime();
-            setStarUsDialogLastOpen(lastOpen);
-            setTimeout(openStarUsDialog, OPEN_STAR_US_AFTER_SECONDS * 1000);
-        }
-    }, [
-        currentDiagram?.id,
-        githubRepoOpened,
-        openStarUsDialog,
-        setStarUsDialogLastOpen,
-        starUsDialogLastOpen,
+        addDiagram,
+        deleteDiagram,
     ]);
 
     useEffect(() => {

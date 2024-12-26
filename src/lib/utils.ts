@@ -101,3 +101,101 @@ export const sha256 = async (message: string): Promise<string> => {
 
     return hashHex;
 };
+
+// export const exportIndexedDB = (dbName: string): Promise<string> => {
+//     return new Promise<string>((resolve, reject) => {
+//         const request = indexedDB.open(dbName);
+
+//         request.onsuccess = (event) => {
+//             const db = (event.target as IDBOpenDBRequest).result;
+//             const transaction = db.transaction(db.objectStoreNames, 'readonly');
+//             const exportData: Record<string, any[]> = {};
+
+//             let pendingStores = db.objectStoreNames.length;
+
+//             Array.from(db.objectStoreNames).forEach((storeName) => {
+//                 const objectStore = transaction.objectStore(storeName);
+//                 const getAllRequest = objectStore.getAll();
+
+//                 getAllRequest.onsuccess = (event) => {
+//                     exportData[storeName] = (event.target as IDBRequest).result;
+//                     pendingStores--;
+//                     console.log(exportData)
+//                     if (pendingStores === 0) {
+//                         resolve(JSON.stringify(exportData, null, 2));
+//                     }
+//                 };
+
+//                 getAllRequest.onerror = () => {
+//                     reject(`Error reading data from store: ${storeName}`);
+//                 };
+//             });
+//         };
+
+//         request.onerror = () => {
+//             reject('Error opening the IndexedDB.');
+//         };
+//     });
+// }
+
+// export const importIndexedDB = (dbName: string, data: string): Promise<string> => {
+//     return new Promise<string>((resolve, reject) => {
+//         const importData = JSON.parse(data);
+//         const storeNames = Object.keys(importData);
+//         const request = indexedDB.open(dbName, Date.now());
+
+//         request.onupgradeneeded = (event) => {
+//             const db = (event.target as IDBOpenDBRequest).result;
+//             storeNames.forEach((storeName) => {
+//                 if (!db.objectStoreNames.contains(storeName)) {
+//                     db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+//                 }
+//             });
+//         };
+
+//         request.onsuccess = async (event) => {
+//             const db = (event.target as IDBOpenDBRequest).result;
+
+//             try {
+//                 const storePromises = storeNames.map(async (storeName) => {
+//                     if (!db.objectStoreNames.contains(storeName)) {
+//                         throw new Error(`Object store "${storeName}" does not exist.`);
+//                     }
+
+//                     const transaction = db.transaction([storeName], 'readwrite');
+//                     const objectStore = transaction.objectStore(storeName);
+
+//                     // Clear the store
+//                     await new Promise<void>((resolve, reject) => {
+//                         const clearRequest = objectStore.clear();
+//                         clearRequest.onsuccess = () => resolve();
+//                         clearRequest.onerror = (event) => reject(event.target.error);
+//                     });
+
+//                     // Insert new records
+//                     const records = importData[storeName];
+//                     if (records && records.length > 0) {
+//                         await Promise.all(
+//                             records.map((record) =>
+//                                 new Promise<void>((resolve, reject) => {
+//                                     const putRequest = objectStore.put(record);
+//                                     putRequest.onsuccess = () => resolve();
+//                                     putRequest.onerror = (event) => reject(event.target.error);
+//                                 })
+//                             )
+//                         );
+//                     }
+//                 });
+
+//                 await Promise.all(storePromises);
+//                 resolve('Data imported successfully.');
+//             } catch (error) {
+//                 reject(`Error during import: ${error.message}`);
+//             }
+//         };
+
+//         request.onerror = (event) => {
+//             reject(`Error opening the IndexedDB: ${event.target.error}`);
+//         };
+//     });
+// };

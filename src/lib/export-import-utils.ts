@@ -22,7 +22,6 @@ export const diagramToJSONOutput = (diagram: Diagram): string => {
 
 export const diagramFromJSONInput = (json: string): Diagram => {
     const loadedDiagram = JSON.parse(json);
-
     const diagram = diagramSchema.parse({
         ...loadedDiagram,
         createdAt: new Date(),

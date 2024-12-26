@@ -36,15 +36,17 @@ import { LastSaved } from './last-saved';
 import { useNavigate } from 'react-router-dom';
 import { LanguageNav } from './language-nav/language-nav';
 import { useAlert } from '@/context/alert-context/alert-context';
+import axios from 'axios';
 
 export interface TopNavbarProps {}
 
 export const TopNavbar: React.FC<TopNavbarProps> = () => {
     const {
+        databaseType,
+        loadDiagram,
         clearDiagramData,
         deleteDiagram,
         updateDiagramUpdatedAt,
-        databaseType,
     } = useChartDB();
     const {
         openCreateDiagramDialog,
@@ -114,6 +116,47 @@ export const TopNavbar: React.FC<TopNavbarProps> = () => {
     const openCalendly = useCallback(() => {
         window.open('https://calendly.com/fishner/15min', '_blank');
     }, []);
+
+    const getDiagramIdFromUrl = () => {
+        const url = new URL(window.location.href);
+        const pathSegments = url.pathname.split('/'); // Split path into segments
+        return pathSegments[pathSegments.length - 1]; // Get the last segment
+    };
+
+    // Usage
+    const diagramId = getDiagramIdFromUrl();
+
+    const saveToDB = useCallback(async () => {
+        console.log(diagramId);
+        loadDiagram(diagramId).then((diagram) => {
+            console.log(diagram);
+            axios.post(`http://localhost:3000/api/diagrams/${diagramId}`, {
+                diagram,
+            });
+        });
+        // console.log(diagram);
+        // console.log('saveToDB', currentDiagram);
+        // const json = diagramToJSONOutput(currentDiagram);
+        // console.log(json);
+        // axios.put('http://localhost:3000/api/diagrams/676ad587d1cd685b25360058', {  jsonData : {
+        //     diagramName,
+        //     data : json
+        // } })
+        // exportIndexedDB('ChartDB').then((jsonData : any) => {
+        //     // jsonData is a string containing the data in JSON format
+        //     console.log(jsonData);
+        //     // axios.post('http://localhost:3000/api/diagrams', { jsonData })
+        //     // Optionally, save it as a file (e.g., a .json file)
+        //     // const blob = new Blob([jsonData], { type: 'application/json' });
+        //     // const link = document.createElement('a');
+        //     // link.href = URL.createObjectURL(blob);
+        //     // link.download = 'indexeddb-export.json';
+        //     // link.click();
+        // }).catch((error) => {
+        //     console.error('Failed to export IndexedDB:', error);
+        // });
+        updateDiagramUpdatedAt();
+    }, [diagramId, loadDiagram, updateDiagramUpdatedAt]);
 
     const exportSQL = useCallback(
         (databaseType: DatabaseType) => {
@@ -265,7 +308,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = () => {
                                     }
                                 </MenubarShortcut>
                             </MenubarItem>
-                            <MenubarItem onClick={updateDiagramUpdatedAt}>
+                            <MenubarItem onClick={saveToDB}>
                                 {t('menu.file.save')}
                                 <MenubarShortcut>
                                     {
