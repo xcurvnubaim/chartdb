@@ -25,10 +25,31 @@ export const getWorkspaceId = (): string => {
     return workspaceId;
 };
 
-export const generateDiagramId = () => {
-    const prefix = getWorkspaceId();
+function generateMongoDBId() {
+    // Timestamp (4 bytes)
+    const timestamp = Math.floor(Date.now() / 1000)
+        .toString(16)
+        .padStart(8, '0');
 
-    return `${prefix}${randomId(4)}`;
+    // Random value (5 bytes)
+    const randomValue = Array.from({ length: 10 }, () =>
+        Math.floor(Math.random() * 16).toString(16)
+    ).join('');
+
+    // Counter (3 bytes)
+    const counter = Array.from({ length: 6 }, () =>
+        Math.floor(Math.random() * 16).toString(16)
+    ).join('');
+
+    // Combine all parts
+    return (timestamp + randomValue + counter).toLowerCase();
+}
+
+export const generateDiagramId = () => {
+    // const prefix = getWorkspaceId();
+
+    // return `${prefix}${randomId(4)}`;
+    return generateMongoDBId();
 };
 
 export const getOperatingSystem = (): 'mac' | 'windows' | 'unknown' => {

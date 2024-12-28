@@ -16,7 +16,7 @@ import { CreateDiagramDialogStep } from './create-diagram-dialog-step';
 import { ImportDatabase } from '../common/import-database/import-database';
 import { useTranslation } from 'react-i18next';
 import type { BaseDialogProps } from '../common/base-dialog-props';
-import axios from 'axios';
+import { generateDiagramId } from '@/lib/utils';
 
 export interface CreateDiagramDialogProps extends BaseDialogProps {}
 
@@ -88,9 +88,7 @@ export const CreateDiagramDialog: React.FC<CreateDiagramDialogProps> = ({
     ]);
 
     const createEmptyDiagram = useCallback(async () => {
-        const res = await axios.post('http://localhost:3000/api/diagrams');
-        const newDiagramId = res.data.insertedId;
-        console.log(res);
+        const newDiagramId = generateDiagramId();
 
         const diagram: Diagram = {
             id: newDiagramId,

@@ -20,7 +20,7 @@ import { useExportImage } from '@/hooks/use-export-image';
 import { databaseTypeToLabelMap } from '@/lib/databases';
 import { DatabaseType } from '@/lib/domain/database-type';
 import { useConfig } from '@/hooks/use-config';
-import { IS_CHARTDB_IO } from '@/lib/env';
+import { IS_CHARTDB_IO, API_URL } from '@/lib/env';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import {
     KeyboardShortcutAction,
@@ -33,7 +33,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useLocalConfig } from '@/hooks/use-local-config';
 import { DiagramName } from './diagram-name';
 import { LastSaved } from './last-saved';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { LanguageNav } from './language-nav/language-nav';
 import { useAlert } from '@/context/alert-context/alert-context';
 import axios from 'axios';
@@ -117,23 +117,25 @@ export const TopNavbar: React.FC<TopNavbarProps> = () => {
         window.open('https://calendly.com/fishner/15min', '_blank');
     }, []);
 
-    const getDiagramIdFromUrl = () => {
-        const url = new URL(window.location.href);
-        const pathSegments = url.pathname.split('/'); // Split path into segments
-        return pathSegments[pathSegments.length - 1]; // Get the last segment
-    };
+    // const getDiagramIdFromUrl = () => {
+    //     const url = new URL(window.location.href);
+    //     const pathSegments = url.pathname.split('/'); // Split path into segments
+    //     return pathSegments[pathSegments.length - 1]; // Get the last segment
+    // };
 
     // Usage
-    const diagramId = getDiagramIdFromUrl();
+    const { diagramId } = useParams<{ diagramId: string }>();
 
     const saveToDB = useCallback(async () => {
         console.log(diagramId);
-        loadDiagram(diagramId).then((diagram) => {
-            console.log(diagram);
-            axios.post(`http://localhost:3000/api/diagrams/${diagramId}`, {
-                diagram,
+        if (diagramId) {
+            loadDiagram(diagramId).then((diagram) => {
+                console.log(diagram);
+                axios.post(`${API_URL}/diagrams/${diagramId}`, {
+                    diagram,
+                });
             });
-        });
+        }
         // console.log(diagram);
         // console.log('saveToDB', currentDiagram);
         // const json = diagramToJSONOutput(currentDiagram);

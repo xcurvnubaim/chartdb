@@ -37,12 +37,13 @@ import { Spinner } from '@/components/spinner/spinner';
 import { Helmet } from 'react-helmet-async';
 import { useStorage } from '@/hooks/use-storage';
 import { AlertProvider } from '@/context/alert-context/alert-provider';
+import { API_URL } from '@/lib/env';
 
 import axios from 'axios';
 
-const OPEN_BUCKLE_AFTER_SECONDS = 60;
-const SHOW_BUCKLE_AGAIN_AFTER_DAYS = 1;
-const SHOW_BUCKLE_AGAIN_OPENED_AFTER_DAYS = 7;
+// const OPEN_BUCKLE_AFTER_SECONDS = 60;
+// const SHOW_BUCKLE_AGAIN_AFTER_DAYS = 1;
+// const SHOW_BUCKLE_AGAIN_OPENED_AFTER_DAYS = 7;
 
 export const EditorDesktopLayoutLazy = React.lazy(
     () => import('./editor-desktop-layout')
@@ -63,23 +64,17 @@ const EditorPageComponent: React.FC = () => {
     const { openSelectSchema, showSidePanel } = useLayout();
     const { resetRedoStack, resetUndoStack } = useRedoUndoStack();
     const { showLoader, hideLoader } = useFullScreenLoader();
-    const { openCreateDiagramDialog, openBuckleDialog } =
-        useDialog();
+    const { openCreateDiagramDialog } = useDialog();
     const { diagramId } = useParams<{ diagramId: string }>();
     const { config, updateConfig } = useConfig();
     const navigate = useNavigate();
     const { isMd: isDesktop } = useBreakpoint('md');
     const [initialDiagram, setInitialDiagram] = useState<Diagram | undefined>();
-    const {
-        hideMultiSchemaNotification,
-        setHideMultiSchemaNotification,
-        setBuckleDialogLastOpen,
-        buckleDialogLastOpen,
-        buckleWaitlistOpened,
-    } = useLocalConfig();
+    const { hideMultiSchemaNotification, setHideMultiSchemaNotification } =
+        useLocalConfig();
     const { toast } = useToast();
     const { t } = useTranslation();
-    const { listDiagrams,deleteDiagram,addDiagram } = useStorage();
+    const { listDiagrams, deleteDiagram, addDiagram } = useStorage();
 
     useEffect(() => {
         if (!config) {
@@ -93,15 +88,24 @@ const EditorPageComponent: React.FC = () => {
         // console.log(diagramId);
 
         const fetchDiagram = async () => {
-            console.log(diagramId);
-            console.log('fetching diagram');
-            const response = await axios.get(
-                `http://localhost:3000/api/diagrams/${diagramId}`
-            );
-            console.log(response.data.diagram);
-            if (diagramId) {
-                await deleteDiagram(diagramId);
-                await addDiagram({ diagram: response.data.diagram });
+            try {
+                console.log(diagramId);
+                console.log('fetching diagram');
+                const response = await axios.get(
+                    `${API_URL}/diagrams/${diagramId}`
+                );
+                console.log(response.data.diagram);
+
+                if (!diagramId) return;
+
+                if (response.data.diagram) {
+                    await deleteDiagram(diagramId);
+                    await addDiagram({ diagram: response.data.diagram });
+                } else {
+                    await loadDiagram(diagramId);
+                }
+            } catch (error) {
+                console.log(error);
             }
         };
 
@@ -169,33 +173,6 @@ const EditorPageComponent: React.FC = () => {
         updateConfig,
         addDiagram,
         deleteDiagram,
-    ]);
-
-    useEffect(() => {
-        if (!currentDiagram?.id) {
-            return;
-        }
-
-        if (
-            new Date().getTime() - buckleDialogLastOpen >
-            1000 *
-                60 *
-                60 *
-                24 *
-                (buckleWaitlistOpened
-                    ? SHOW_BUCKLE_AGAIN_OPENED_AFTER_DAYS
-                    : SHOW_BUCKLE_AGAIN_AFTER_DAYS)
-        ) {
-            const lastOpen = new Date().getTime();
-            setBuckleDialogLastOpen(lastOpen);
-            setTimeout(openBuckleDialog, OPEN_BUCKLE_AFTER_SECONDS * 1000);
-        }
-    }, [
-        currentDiagram?.id,
-        buckleWaitlistOpened,
-        openBuckleDialog,
-        setBuckleDialogLastOpen,
-        buckleDialogLastOpen,
     ]);
 
     const lastDiagramId = useRef<string>('');
