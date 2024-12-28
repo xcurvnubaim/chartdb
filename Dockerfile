@@ -10,6 +10,8 @@ RUN npm ci
 
 COPY . .
 
+ENV VITE_API_URL=/api
+
 RUN npm run build
 
 # Use a lightweight web server to serve the production build

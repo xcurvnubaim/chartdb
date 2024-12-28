@@ -13,6 +13,10 @@ server {
         return 200 "window.env = { OPENAI_API_KEY: \"$OPENAI_API_KEY\" };";
     }
 
+    location /api {
+        proxy_pass http://be;
+    }
+
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {
         root   /usr/share/nginx/html;
