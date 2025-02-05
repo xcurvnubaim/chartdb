@@ -11,7 +11,7 @@ app.use(bodyParser.json());
 
 const client = new MongoClient(process.env.MONGODB_URI);
 const db = client.db(process.env.DB_NAME);
-const diagramsCollection = db.collection('diagrams');
+const diagramsCollection = db.collection(process.env.COLLECTION_NAME);
 
 // Save a new diagram
 app.post('/api/diagrams', async (req, res) => {
